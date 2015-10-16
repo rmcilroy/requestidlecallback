@@ -212,37 +212,65 @@ The maximum deadline of 50ms is derived from studies [[RESPONSETIME]] which show
 <dl>
 <dt>conforming user agent</dt>
 <dd>
-A user agent is considered to be a conforming user agent if it satisfies all of the MUST-, REQUIRED- and SHALL-level criteria in this specification. A conforming user agent must also be a <a href="http://www.w3.org/TR/WebIDL/#dfn-conforming-implementation">conforming implementation</a> of the IDL fragment in section <a href="#window_extensions"></a>, as described in the Web IDL specification [[!webidl]].
+A user agent is considered to be a conforming user agent if it satisfies all of the MUST-, REQUIRED- and SHALL-level criteria in this specification. A conforming user agent must also be a <a href="http://www.w3.org/TR/WebIDL/#dfn-conforming-implementation">conforming implementation</a> of the IDL fragment in section <a href="#api"></a>, as described in the Web IDL specification [[!webidl]].
 </p>
 </dd>
 </dl>
 
 </section>
 
+<section id='api'>
+
+<h2>API</h2>
+
 <section id='window_extensions'>
 
-<h2>Window interface extensions</h2>
+<h3>Window interface extensions</h3>
 
 <p>
 The partial interface in the IDL fragment below is used to expose the <code>requestIdleCallback</code> operation on the <code><a href="http://www.w3.org/TR/html5/browsers.html#the-window-object">Window</a></code> object. In the definition of <code>requestIdleCallback</code> below, references to the <code><a href="http://www.w3.org/TR/dom/#document">Document</a></code> object [[!dom]] are to be taken to be references to the <code>Window</code> object's <a href="http://www.w3.org/TR/html5/browsers.html#active-document">active document</a>. [[!HTML5]]
 </p>
-<pre class='idl'>
-partial interface Window {
-  unsigned long requestIdleCallback(IdleRequestCallback callback, optional IdleRequestOptions options);
-  void cancelIdleCallback(unsigned long handle);
-};
 
-dictionary IdleRequestOptions {
-  optional unsigned long timeout;
-};
+<dl title='partial interface Window' class='idl'>
+  <dt id="widl-requestIdleCallback">unsigned long requestIdleCallback(IdleRequestCallback callback, optional IdleRequestOptions options)</dt>
+  <dd>Schedules <var>callback</var> to be run during a future idle period. Returns a <var>handle</var> which can be used in <code><a href="#widl-Window-cancelIdleCallback-void-unsigned-long-handle">cancelIdleCallback()</a></code>.</dd>
+  <dt id="widl-cancelIdleCallback">void cancelIdleCallback(unsigned long handle)</dt>
+  <dd>Cancels the callback scheduled by <code><a href="#widl-Window-requestIdleCallback-unsigned-long-IdleRequestCallback-callback-IdleRequestOptions-options">requestIdleCallback()</a></code> that is identified by <var>handle</var>.</dd>
+</dl>
 
-interface IdleDeadline {
-  DOMHighResTimeStamp timeRemaining();
-  readonly attribute boolean didTimeout;
-};
+</section>
+<section>
+<h3>IdleRequestCallback</h3>
 
-callback IdleRequestCallback = void (IdleDeadline deadline);
-</pre>
+<dl title='callback IdleRequestCallback = void (IdleDeadline deadline)' class='idl'></dl>
+
+An <code>IdleRequestCallback</code> is called with one parameter of type <code><a href="#idl-def-IdleDeadline">IdleDeadline</a></code> which specifies the time available to the idle task for execution.
+
+</section>
+<section>
+<h3>IdleRequestOptions</h3>
+
+<dl title='dictionary IdleRequestOptions' class='idl'>
+  <dt>optional unsigned long timeout</dt>
+  <dd>If non-zero, specifies the timeout in milliseconds after which the callback should be run regardless of whether the user-agent is idle.</dd>
+</dl>
+
+</section>
+<section>
+<h3>IdleDeadline</h3>
+
+<dl title='interface IdleDeadline' class='idl'>
+  <dt>DOMHighResTimeStamp timeRemaining()</dt>
+  <dd>MUST return the amount of time remaining before the callback's deadline as a DOMHighResTimeStamp. The value SHOULD be accurate to 5 microseconds - see <a href="http://w3.org/TR/hr-time-2/#privacy-security">Privacy and Security</a>.</dd>
+  <dd>Returns the amount of time remaining in the deadline as a [DOMHighResTimeStamp][].</dd>
+  <dt>readonly attribute boolean didTimeout</dt>
+  <dd>MUST return <code>true</code> if the callback was invoked by the <a>invoke idle callback timeout algorithm</a>, and <code>false</code> otherwise.</dd>
+</dl>
+
+</section>
+</section>
+<section>
+<h3>Implementation</h3>
 
 <p>
 Each <code>Document</code> has:
@@ -300,7 +328,6 @@ Let <var>document</var> be the <code>Window</code> object's
 <code>cancelIdleCallback</code> might be invoked for an entry in the <var>document</var>'s <a>list of idle request callbacks</a> or the <var>document</var>'s <a>list of runnable idle callbacks</a> . In either case the entry should be removed from the list so that the callback does not run.
 </p>
 <p>
-When the <code>timeRemaining()</code> function is called on an <code>IdleDeadline</code> object it MUST return the amount of time remaining before the callback's deadline as a DOMHighResTimeStamp. The value SHOULD be accurate to 5 microseconds - see <a href="http://w3.org/TR/hr-time-2/#privacy-security">Privacy and Security</a>.
 This value is calculated by performing the following steps:
 <ol>
 <li>Let <var>deadline</var> be the deadline of the associated callback as a <code><a href="http://www.w3.org/TR/hr-time-2/#dom-domhighrestimestamp">DOMHighResTimeStamp</a></code>. [[!hr-time-2]]</li>
@@ -309,8 +336,6 @@ This value is calculated by performing the following steps:
 <li>If <var>timeRemaining</var> is negative, set it to 0.</li>
 <li>Return <var>timeRemaining</var>.</li>
 </ol>
- </p>
-<p>The <code>didTimeout</code> attribute on an <code>IdleDeadline</code> object MUST return <code>true</code> if the callback was invoked by the <a>invoke idle callback timeout algorithm</a>, and <code>false</code> otherwise.
 </p>
 </section>
 <section>
