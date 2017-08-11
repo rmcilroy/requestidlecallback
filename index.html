@@ -116,9 +116,9 @@
     templating and pre-rendering of content likely to become visible in the
     near future. These tasks must share the event loop with other time-critical
     operations, such as reacting to input and performing script-based
-    animations using <code><a>requestAnimationFrame</a><code>. These
+    animations using <code><a>requestAnimationFrame</a></code>. These
     background tasks are typically performed by scheduling a callback using
-    <code><a>setTimeout</a><code> and running the background task during that
+    <code><a>setTimeout</a></code> and running the background task during that
     callback.</p>
     <p>A disadvantage of this approach is that the author of the script has no
     way to inform the user-agent as to whether a given `setTimeout` callback is
@@ -341,7 +341,7 @@ interface IdleDeadline {
 
 callback IdleRequestCallback = void (IdleDeadline deadline);
 </pre>
-    <p>Each <code><a>Window</a><code> has:</p>
+    <p>Each <code><a>Window</a></code> has:</p>
     <ul>
       <li>A <dfn>list of idle request callbacks</dfn>. The list MUST be
       initially empty and each entry in this list is identified by a number,
@@ -511,7 +511,7 @@ callback IdleRequestCallback = void (IdleDeadline deadline);
         <li>Optionally, wait a further user-agent defined length of time.
           <p class='note'>This is intended to allow user agents to delay the
           start of idle periods as needed to optimise the power usage of the
-          device. For example, if the `Document`'s <code><a>hidden</a><code>
+          device. For example, if the `Document`'s <code><a>hidden</a></code>
           attribute ([[!page-visibility]]) is `true` then the user agent can
           throttle idle period generation, for example limiting the Document to
           one idle period every 10 seconds to optimize for power usage.</p>
@@ -523,9 +523,9 @@ callback IdleRequestCallback = void (IdleDeadline deadline);
         delayed even if a callback runs for the whole time period from
         <var>now</var> to <var>deadline</var>. As such, it should be set to the
         minimum of: the closest timeout in the <a>list of active timers</a> as
-        set via <code><a>setTimeout</a><code> and <code><a>setInterval</a>
+        set via <code><a>setTimeout</a></code> and <code><a>setInterval</a>
         <code>; the scheduled runtime for pending animation callbacks posted via
-        <code><a>requestAnimationFrame</a><code>; pending internal timeouts such
+        <code><a>requestAnimationFrame</a></code>; pending internal timeouts such
         as deadlines to start rendering the next frame, process audio or any
         other internal task the user agent deems important.</li>
         <li>If <var>deadline</var> - <var>now</var> is greater than 50ms, then
