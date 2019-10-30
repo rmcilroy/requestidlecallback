@@ -341,19 +341,24 @@ callback IdleRequestCallback = void (IdleDeadline deadline);
 </pre>
     <p>Each <a>Window</a> has:</p>
     <ul>
-      <li>A <dfn>list of idle request callbacks</dfn>. The list MUST be
-      initially empty and each entry in this list is identified by a number,
-      which MUST be unique within the list for the lifetime of the <code>Window</code>
-      object.</li>
-      <li>A <dfn>list of runnable idle callbacks</dfn>. The list MUST be
-      initially empty and each entry in this list is identified by a number,
-      which MUST be unique within the list of the lifetime of the <code>Window</code>
-      object.</li>
       <li>An <dfn>idle callback identifier</dfn>, which is a number which MUST
       initially be zero.</li>
+    </ul>
+
+    <p>In addition, each <a>event loop</a> has:</p>
+    <ul>
+      <li>A <dfn>list of idle request callbacks</dfn>. The list MUST be
+      initially empty and each entry in this list is identified by <a>Window</a>
+      and a number, the combination of which MUST be unique within the list for
+      the lifetime of the <a>event loop</a>.</li>
+      <li>A <dfn>list of runnable idle callbacks</dfn>. The list MUST be
+      initially empty and each entry in this list is identified by a
+      <a>Window</a> and a number, the combination of which which MUST be unique
+      within the list for the lifetime of the <a>event loop</a>.</li>
       <li>A <dfn>last idle period deadline</dfn>, which is a
       <a>DOMHighResTimeStamp</a> which MUST initially be zero.
     </ul>
+
     <section data-link-for="Window">
       <h2>The <code><dfn data-dfn-for="Window">requestIdleCallback</dfn></code>
       method</h2>
@@ -367,8 +372,11 @@ callback IdleRequestCallback = void (IdleDeadline deadline);
         by one.</li>
         <li>Let <var>handle</var> be the current value of <var>window</var>'s
         <a>idle callback identifier</a>.</li>
-        <li>Push <var>callback</var> to the end of <var>window</var>'s <a>list
-        of idle request callbacks</a>, associated with <var>handle</var>.</li>
+        <li>Let <var>event_loop</var> be the <a>event loop</a> associated with
+        <var>window</var></li>
+        <li>Push <var>callback</var> to the end of <var>event_loop</var>'s
+        <a>list of idle request callbacks</a>, associated with <var>handle</var>
+        and <var>window</var>.</li>
         <li>Return <var>handle</var> and then continue running this algorithm
         asynchronously.
           <p class="note">The following steps run in parallel and queue a timer
@@ -421,11 +429,13 @@ callback IdleRequestCallback = void (IdleDeadline deadline);
       </p>
       <ol>
         <li>Let <var>window</var> be this <code>Window</code> object.</li>
-        <li>Find the entry in either the <var>window</var>'s <a>list of idle
+        <li>Let <var>event_loop</var> be the <a>event loop</a> associated with
+        <var>window</var></li>
+        <li>Find the entry in either the <var>event_loop</var>'s <a>list of idle
         request callbacks</a> or <a>list of runnable idle callbacks</a> that is
-        associated with the value <var>handle</var>.
+        associated with the value <var>handle</var> and <var>window</var>.
         </li>
-        <li>If there is such an entry, remove it from both <var>window</var>'s
+        <li>If there is such an entry, remove it from both <var>event_loop</var>'s
         <a>list of idle request callbacks</a> and the <a>list of runnable idle
         callbacks</a>.
         </li>
@@ -479,7 +489,7 @@ callback IdleRequestCallback = void (IdleDeadline deadline);
       the <a>event loop</a> is otherwise idle:</p>
       <ol>
         <li>Let <var>last_deadline</var> be the <a>last idle period deadline</a>
-        associated with <var>window</var>
+        associated with <var>event_loop</var>
         <li>If <var>last_deadline</var> is greater than the current time,
         return from this algorithm.
         <li>Optionally, if the user agent determines the idle period should
@@ -509,11 +519,11 @@ callback IdleRequestCallback = void (IdleDeadline deadline);
           responsiveness to new user input within the threshold of human
           perception.</p>
         </li>
-        <li>Let <var>pending_list</var> be <var>window</var>'s <a>list of idle
-        request callbacks</a>.
+        <li>Let <var>pending_list</var> be <var>event_loop</var>'s <a>list of
+        idle request callbacks</a>.
         </li>
-        <li>Let <var>run_list</var> be <var>window</var>'s <a>list of runnable
-        idle callbacks</a>.
+        <li>Let <var>run_list</var> be <var>event_loop</var>'s <a>list of
+        runnable idle callbacks</a>.
         </li>
         <li>Append all entries from <var>pending_list</var> into
         <var>run_list</var> preserving order.</li>
@@ -521,19 +531,20 @@ callback IdleRequestCallback = void (IdleDeadline deadline);
         <li><a>Queue a task</a> on the queue associated with the idle-task
         <a>task source</a>, which performs the steps defined in the <a>invoke
         idle callbacks algorithm</a> with <var>deadline</var> and
-        <var>window</var> as parameters.
+        <var>event_loop</var> as parameters.
         </li>
         <li>Save <var>deadline</var> as the <a>last idle period deadline</a>
-        associated with <var>window</var>.</li>
+        associated with <var>event_loop</var>.</li>
       </ol>
       <p>The <a>task source</a> for these <a>tasks</a> is the <dfn>idle-task
       task source</dfn>.</p>
       <div class="note">
         <p>The time between <var>now</var> and <var>deadline</var> is referred
         to as the <dfn>idle period</dfn>. There can only be one idle period
-        active at a given time for any given <code>window</code>. The idle period can end
-        early if the user agent determines that it is no longer idle. If so,
-        the next idle period cannot start until after <var>deadline</var>.</p>
+        active at a given time for any given <a>event loop</a>. The idle period
+        can end early if the user agent determines that it is no longer idle. If
+        so, the next idle period cannot start until after <var>deadline</var>.
+        </p>
       </div>
     </section>
     <section>
@@ -544,9 +555,10 @@ callback IdleRequestCallback = void (IdleDeadline deadline);
         to newly scheduled high-priority work, return from the algorithm.
         <li>Let <var>now</var> be the current time.</li>
         <li>If <var>now</var> is less than <var>deadline</var> and the
-        <var>window</var>'s <a>list of runnable idle callbacks</a> is not empty:
+        <var>event_loop</var>'s <a>list of runnable idle callbacks</a> is not
+        empty:
           <ol>
-            <li>Pop the top <var>callback</var> from <var>window</var>'s
+            <li>Pop the top <var>callback</var> from <var>event_loop</var>'s
             <a>list of runnable idle callbacks</a>.</li>
             <li>Let <var>deadlineArg</var> be a new <a>IdleDeadline</a>.
             Set the <a>time</a> associated with <var>deadlineArg</var> to
@@ -555,10 +567,10 @@ callback IdleRequestCallback = void (IdleDeadline deadline);
             <li>Call <var>callback</var> with <var>deadlineArg</var> as its
             argument. If an uncaught runtime script error occurs, then <a>report
             the error</a>.</li>
-            <li>If <var>window</var>'s <a>list of runnable idle callbacks</a>
+            <li>If <var>event_loop</var>'s <a>list of runnable idle callbacks</a>
             is not empty, <a>queue a task</a> which performs the steps in the
             <a>invoke idle callbacks algorithm</a> with <var>deadline</var>
-            and <var>window</var> as a parameters and return from this
+            and <var>event_loop</var> as a parameters and return from this
             algorithm</li>
           </ol>
         </li>
@@ -572,16 +584,19 @@ callback IdleRequestCallback = void (IdleDeadline deadline);
       <h2>Invoke idle callback timeout algorithm</h2>
       <p>The <dfn>invoke idle callback timeout algorithm</dfn>:</p>
       <ol>
+        <li>Let <var>event_loop</var> be the <a>event loop</a> associated with
+        <var>window</var> argument passed to the algorithm</li>
         <li>Let <var>callback</var> be the result of finding the entry in <var>
-          window</var>'s <a>list of idle request callbacks</a> or the <a>list
+          event_loop</var>'s <a>list of idle request callbacks</a> or the <a>list
           of runnable idle callbacks</a> that is associated with the value
-          given by the <var>handle</var> argument passed to the algorithm.
+          given by the <var>handle</var> and <var>window</var> arguments passed
+          to the algorithm.
         </li>
         <li>If <var>callback</var> is not undefined:
           <ol>
-            <li>Remove <var>callback</var> from both <var>window</var>'s <a>list
-            of idle request callbacks</a> and the <a>list of runnable idle
-            callbacks</a>.</var></li>
+            <li>Remove <var>callback</var> from both <var>event_loop</var>'s
+            <a>list of idle request callbacks</a> and the <a>list of runnable
+            idle callbacks</a>.</var></li>
             <li>Let <var>now</var> be the current time.</li>
             <li>Let <var>deadlineArg</var> be a new <a>IdleDeadline</a>.
             Set the <a>time</a> associated with <var>deadlineArg</var> to
